@@ -4,11 +4,24 @@ import React, { useState, useEffect } from "react";
 
 import { Tokenizer } from "@/lib/tokenizer";
 
-import vocabData from "@/lib/tokenizer.json";
+import vocabDataLlama2 from "@/lib/llama2.json";
+import vocabDataLlama3 from "@/lib/llama3.json";
+import vocabDataOther from "@/lib/tokenizer.json";
+
+const modelVocabMap: { [key: string]: any } = {
+  "Llama 2": vocabDataLlama2,
+  "Llama 3": vocabDataLlama3,
+  Other: vocabDataOther,
+};
+
+const availableModels = ["Llama 2", "Llama 3", "Other"];
 
 const Home = () => {
   const EXAMPLE_TEXT =
     "Hi there, how are you doing today? I hope you are doing well!";
+
+  const [selectedModel, setSelectedModel] =
+    useState<keyof typeof modelVocabMap>("Llama 2"); // Default model
 
   const [displayMode, setDisplayMode] = useState<"token" | "id">("token");
 
@@ -18,9 +31,12 @@ const Home = () => {
     colorMappedTokens?: [string, number, string][];
   }>({});
 
+  const [tokenCount, setTokenCount] = useState<number>(0);
+
   useEffect(() => {
+    const vocabData = modelVocabMap[selectedModel];
     setTokenizer(new Tokenizer(vocabData));
-  }, []);
+  }, [selectedModel]); // Re-run when model changes
 
   const handleTokenize = () => {
     if (!tokenizer || !userInput) return;
@@ -29,6 +45,7 @@ const Home = () => {
     const ids = tokenizer.tokensToIds(tokens);
     const colorMappedTokens = tokenizer.mapTokensToColors(tokens, ids);
     setResults({ colorMappedTokens });
+    setTokenCount(tokens.length);
   };
 
   const handleClear = () => {
@@ -43,6 +60,7 @@ const Home = () => {
       const ids = tokenizer.tokensToIds(tokens);
       const colorMappedTokens = tokenizer.mapTokensToColors(tokens, ids);
       setResults({ colorMappedTokens });
+      setTokenCount(tokens.length); // Add this line to update token count
     }
   };
 
@@ -60,15 +78,27 @@ const Home = () => {
         {/* Sidebar */}
         <aside className="w-full lg:w-64 bg-gray-200 p-4 sm:p-5 lg:p-6 shadow-inner">
           <ul className="space-y-4 flex flex-row lg:flex-col justify-around lg:justify-start overflow-x-auto lg:overflow-visible">
-            <li className="text-sm sm:text-md lg:text-lg font-semibold text-gray-700 whitespace-nowrap px-2 lg:px-0">
-              GPT-4o & GPT-4o mini
-            </li>
-            <li className="text-sm sm:text-md lg:text-lg font-semibold text-gray-700 whitespace-nowrap px-2 lg:px-0">
-              GPT-3.5 & GPT-4
-            </li>
-            <li className="text-sm sm:text-md lg:text-lg font-semibold text-gray-700 whitespace-nowrap px-2 lg:px-0">
-              GPT-3 (Legacy)
-            </li>
+            {availableModels.map((model) => (
+              <li
+                key={model}
+                onClick={() => setSelectedModel(model)}
+                className={`
+          text-sm sm:text-md lg:text-lg 
+          font-semibold 
+          whitespace-nowrap 
+          px-4 py-2 rounded-md
+          cursor-pointer
+          transition-all duration-200
+          ${
+            selectedModel === model
+              ? "bg-blue-500 text-white shadow-md transform scale-105"
+              : "text-gray-700 hover:bg-gray-300 hover:text-gray-900"
+          }
+        `}
+              >
+                {model}
+              </li>
+            ))}
           </ul>
         </aside>
 
@@ -84,9 +114,13 @@ const Home = () => {
 
             {results.colorMappedTokens && (
               <div className="mt-4 space-y-4">
+                <div className="text-sm text-gray-600 mb-2">
+                  Number of tokens: {tokenCount}
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {results.colorMappedTokens.map(
-                    ([token, id, color], index) => (
+                  {results.colorMappedTokens
+                    .filter(([token, id]) => !(token === " " && id === -1))
+                    .map(([token, id, color], index) => (
                       <div
                         key={index}
                         className="px-2 py-1 rounded text-sm transition-all duration-200"
@@ -97,8 +131,7 @@ const Home = () => {
                       >
                         {displayMode === "token" ? token : id}
                       </div>
-                    )
-                  )}
+                    ))}
                 </div>
               </div>
             )}

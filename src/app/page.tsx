@@ -8,13 +8,15 @@ import vocabDataLlama2 from "@/lib/llama2.json";
 import vocabDataLlama3 from "@/lib/llama3.json";
 import vocabDataOther from "@/lib/tokenizer.json";
 
-const modelVocabMap: { [key: string]: any } = {
+const modelVocabMap = {
   "Llama 2": vocabDataLlama2,
   "Llama 3": vocabDataLlama3,
   Other: vocabDataOther,
-};
+} as const;
 
-const availableModels = ["Llama 2", "Llama 3", "Other"];
+const availableModels = ["Llama 2", "Llama 3", "Other"] as const;
+
+type ModelType = keyof typeof modelVocabMap;
 
 const Home = () => {
   const EXAMPLE_TEXT =
@@ -81,7 +83,7 @@ const Home = () => {
             {availableModels.map((model) => (
               <li
                 key={model}
-                onClick={() => setSelectedModel(model)}
+                onClick={() => setSelectedModel(model as ModelType)}
                 className={`
           text-sm sm:text-md lg:text-lg 
           font-semibold 

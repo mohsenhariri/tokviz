@@ -1,4 +1,9 @@
-// lib/tokenizer/index.ts
+interface TokenizerVocab {
+  model: {
+    vocab: { [key: string]: number };
+  };
+}
+
 export class Tokenizer {
   private tokenToId: { [key: string]: number };
   private tokenToColor: { [key: number]: string } = {};
